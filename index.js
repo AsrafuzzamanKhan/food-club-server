@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 require("dotenv").config();
+const { ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
 const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
@@ -46,7 +47,8 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    client.connect();
+    // await client.connect();
     // Get the database and collection on which to run the operation
     const usersCollection = client.db("foodCludDB").collection("users");
     const menuCollection = client.db("foodCludDB").collection("menu");
