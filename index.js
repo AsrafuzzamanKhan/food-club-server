@@ -2,7 +2,9 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 require("dotenv").config();
-const { ObjectId } = require("mongodb");
+const nodemailer = require("nodemailer");
+const mg = require("nodemailer-mailgun-transport");
+
 const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
 const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
@@ -10,6 +12,50 @@ const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 // middleware
 app.use(cors());
 app.use(express.json());
+
+// let transporter = nodemailer.createTransport({
+//   host: "smtp.sendgrid.net",
+//   port: 587,
+//   auth: {
+//     user: "apikey",
+//     pass: process.env.SENDGRID_API_KEY,
+//   },
+// });
+
+// This is your API key that you retrieve from www.mailgun.com/cp (free up to 10K monthly emails)
+const auth = {
+  auth: {
+    api_key: process.env.EMAIL_PRIVATE_KEY,
+    domain: process.env.EMAIL_DOMAIN,
+  },
+};
+
+const transporter = nodemailer.createTransport(mg(auth));
+
+// send payment confirmation email
+const sendPaymentConfirmationEmail = (payment) => {
+  transporter.sendMail(
+    {
+      from: "asrafuzzamankhan89@gmail.com", // verified sender email
+      to: payment.email, // recipient email
+      subject: "Your Order is Confirmed", // Subject line
+      text: "Hello world!", // plain text body
+      html: `
+      <div>
+      <h2>Payment confirmed</h2>
+      </div>
+      `, // html body
+    },
+    function (error, info) {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log("Email sent: " + info.response);
+      }
+    }
+  );
+};
+
 // jwt token
 const verifyJWT = (req, res, next) => {
   const authorization = req.headers.authorization;
@@ -220,6 +266,10 @@ async function run() {
         _id: { $in: payment.cartItems.map((id) => new ObjectId(id)) },
       };
       const deleteResult = await cartCollection.deleteMany(query);
+
+      // send an email confiming payment
+      sendPaymentConfirmationEmail(payment);
+
       res.send({ insertResult, deleteResult });
     });
 
