@@ -4,7 +4,6 @@ const cors = require("cors");
 require("dotenv").config();
 const nodemailer = require("nodemailer");
 const mg = require("nodemailer-mailgun-transport");
-
 const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
 const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
